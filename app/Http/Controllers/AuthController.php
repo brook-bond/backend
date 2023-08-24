@@ -6,20 +6,25 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller {
     // register a new user method
     public function register(RegisterRequest $request) {
 
         $data = $request->validated();
-
+        $imageName = Str::random(32).".".$data['image']->getClientOriginalExtension();
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
+            'image' => $imageName,
             'password' => Hash::make($data['password']),
         ]);
+
+        Storage::disk('public')->put($imageName, file_get_contents($data['image']));
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
