@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Http\Requests\ProductStoreRequest;
+use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage; 
 
@@ -16,7 +17,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::all();
+        $products = Product::latest()->get();
 
         return response()->json([
             'products' => $products
@@ -38,8 +39,10 @@ class ProductController extends Controller
     {
         try{
             $imageName = Str::random(32).".".$request->image->getClientOriginalExtension();
-            Product::create([
+            $user = User::find($request->user_id);
+            $user->products()->create([
                 'name' => $request->name,
+                'price' => $request->price,
                 'image' => $imageName,
                 'description' => $request->description
             ]);
@@ -59,6 +62,7 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
+        
         $product = Product::find($id);
        if(!$product){
          return response()->json([
@@ -92,7 +96,9 @@ class ProductController extends Controller
               ],404);
             }
       
+            $product->user_id = $request->user_id;
             $product->name = $request->name;
+            $product->price = $request->price;
             $product->description = $request->description;
       
             if($request->image) {
